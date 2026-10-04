@@ -27,3 +27,4 @@ This is a front-end prototype. Vehicle images are AI-generated concepts, not pho
 
 The page has semantic landmarks, descriptive image alternatives, keyboard-operable navigation and view controls, and reduced-motion support. Generated images are stored locally as WebP; the hero image is prioritized and other images load lazily.
 # shipping-website
+# shipping-website
