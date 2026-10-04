@@ -50,7 +50,20 @@ function Arrow({ diagonal = false }: { diagonal?: boolean }) {
 
 function Header() {
   const [open, setOpen] = useState(false)
-  return <header className="site-header">
+  const [scrolled, setScrolled] = useState(false)
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24)
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setOpen(false) }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('keydown', onKey)
+    return () => { window.removeEventListener('scroll', onScroll); window.removeEventListener('keydown', onKey) }
+  }, [])
+  useEffect(() => {
+    document.body.classList.toggle('menu-open', open)
+    return () => document.body.classList.remove('menu-open')
+  }, [open])
+  return <header className={`site-header ${scrolled ? 'is-scrolled' : ''} ${open ? 'is-open' : ''}`}>
     <div className="header-inner container">
       <Wordmark />
       <nav className={`main-nav ${open ? 'nav-open' : ''}`} aria-label="Main navigation">
@@ -59,6 +72,7 @@ function Header() {
         <a onClick={() => setOpen(false)} href="#vehicles">Vehicles</a>
         <a onClick={() => setOpen(false)} href="#shipping">Shipping</a>
         <a onClick={() => setOpen(false)} href="#merchandise">Merchandise</a>
+        <a className="nav-call" onClick={() => setOpen(false)} href="tel:+233241248393"><small>CALL ERAM · GHANA</small>+233 24 124 8393</a>
       </nav>
       <a className="header-cta" href="#contact">LET'S TALK <Arrow diagonal /></a>
       <button className="menu-toggle" type="button" aria-label={open ? 'Close menu' : 'Open menu'} aria-expanded={open} onClick={() => setOpen(!open)}><span /><span /></button>
@@ -232,6 +246,26 @@ function Footer() {
   return <footer className="site-footer"><div className="container"><div className="footer-main"><div><Wordmark light /><p>Shipping. Motors. Merchandise.<br />Moving Ghana forward.</p></div><div className="footer-links"><a href="#experience">Experience</a><a href="#services">Services</a><a href="#vehicles">Vehicles</a><a href="#shipping">Shipping</a><a href="#contact">Contact</a></div></div><div className="footer-bottom"><span>© {new Date().getFullYear()} ERAM SHIPPING & MOTORS</span><span>MADE FOR THE JOURNEY <i>↗</i></span><a href="#top">BACK TO TOP ↑</a></div></div></footer>
 }
 
+function MobileBar({ scrollY }: { scrollY: number }) {
+  const [covered, setCovered] = useState<string[]>([])
+  useEffect(() => {
+    // Hide the bar where it would cover the story's own controls or duplicate the contact card.
+    const ids = ['experience', 'contact']
+    const observer = new IntersectionObserver((entries) => setCovered((now) => {
+      const next = new Set(now)
+      entries.forEach((entry) => entry.isIntersecting ? next.add(entry.target.id) : next.delete(entry.target.id))
+      return [...next]
+    }), { threshold: .15 })
+    ids.forEach((id) => { const el = document.getElementById(id); if (el) observer.observe(el) })
+    return () => observer.disconnect()
+  }, [])
+  const visible = scrollY > 520 && covered.length === 0
+  return <div className={`mobile-bar ${visible ? 'is-visible' : ''}`} aria-hidden={!visible}>
+    <a href="tel:+233241248393" tabIndex={visible ? 0 : -1} className="mobile-bar-main">CALL GHANA <Arrow diagonal /></a>
+    <a href="tel:+12406258512" tabIndex={visible ? 0 : -1} className="mobile-bar-alt">USA</a>
+  </div>
+}
+
 export default function App() {
   const [scrollY, setScrollY] = useState(0)
   const [progress, setProgress] = useState(0)
@@ -254,5 +288,5 @@ export default function App() {
     window.addEventListener('resize', update)
     return () => { cancelAnimationFrame(frame); window.removeEventListener('scroll', update); window.removeEventListener('resize', update) }
   }, [])
-  return <><Header /><main><Hero scrollY={scrollY} /><Experience progress={progress} sectionRef={sectionRef} /><FeatureGallery /><Services /><Vehicles /><Shipping /><RentalsAndGoods /><Contact /></main><Footer /></>
+  return <><Header /><main><Hero scrollY={scrollY} /><Experience progress={progress} sectionRef={sectionRef} /><FeatureGallery /><Services /><Vehicles /><Shipping /><RentalsAndGoods /><Contact /></main><Footer /><MobileBar scrollY={scrollY} /></>
 }
